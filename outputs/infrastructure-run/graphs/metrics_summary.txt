@@ -1,0 +1,30 @@
+titan-exp Infrastructure Validation — Metrics Summary
+======================================================
+
+Log source: /workspace/titan-exp/outputs/infrastructure-run.log
+Points logged (log_freq=10): 51
+Step range: 1 → 500
+Wall time (from timestamps in log): ~38 seconds for 500 steps
+
+LOSS
+  initial: 8.2066
+  final:   3.6827
+  min:     3.6827 @ step 500
+
+THROUGHPUT (tokens/sec, global batch)
+  step 1 (cold): 15,408
+  final:         232,910
+  avg steps~100-500: ~248,443
+
+MFU (A100 peak FLOPS fallback — not calibrated for A40)
+  peak observed: 6.12%
+  avg steady:    5.73%
+
+MEMORY (per rank, reserved)
+  range: 1.20 GiB — 1.29 GiB
+  (tiny 6.27M-param debugmodel; real 8B would use far more)
+
+ARTIFACTS
+  Checkpoints: step-1/, step-250/, step-500/  (DCP, 2 shards × ~37 MB)
+  TensorBoard: tb/20260607-2019/
+  Graphs:      graphs/
