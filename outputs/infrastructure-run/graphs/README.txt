@@ -1,7 +1,12 @@
-Graphs generated on 2026-06-07 from outputs/infrastructure-run.log
-(500-step infrastructure validation run using debugmodel on 2x A40).
+Graphs generated from outputs/infrastructure-run.log (500-step validation run).
 
-Source data: every 10 steps (log_freq=10) + step 1 = 51 points.
-Tooling: custom Python parser (ANSI-stripping regex) + matplotlib.
+See top-level README.md for the main report and docs/details.md for full context and tables.
 
-See top-level README.md for interpretation and the full "Graphs (Generated...)" section.
+Files:
+- 00_metrics_dashboard.png (recommended starting point)
+- 01_loss_curve.png
+- 02_throughput_tps.png
+- 03_mfu.png
+- 04_memory.png
+- 05_tflops.png
+- metrics_summary.txt
