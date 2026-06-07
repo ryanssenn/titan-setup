@@ -1,0 +1,118 @@
+=== titan-exp run ===
+GPUs: 2
+Config: /workspace/titan-exp/configs/infrastructure_run.toml
+NCCL_P2P_DISABLE=1
+NCCL_IB_DISABLE=1
+=====================
+W0607 20:18:57.290000 19559 torch/distributed/run.py:792] 
+W0607 20:18:57.290000 19559 torch/distributed/run.py:792] *****************************************
+W0607 20:18:57.290000 19559 torch/distributed/run.py:792] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0607 20:18:57.290000 19559 torch/distributed/run.py:792] *****************************************
+[rank0]:[titan] 2026-06-07 20:19:02,057 - root - INFO - Starting job: titan-exp infrastructure validation (2 GPU, 500 steps)
+[rank0]:[titan] 2026-06-07 20:19:02,085 - root - WARNING - ENV[TORCH_NCCL_ASYNC_ERROR_HANDLING] = 1 will be overridden to 3 based on job config
+[rank0]:[titan] 2026-06-07 20:19:02,089 - root - INFO - Building 1-D device mesh with ['dp_shard'], [2]
+[rank0]:[titan] 2026-06-07 20:19:02,091 - root - INFO - [GC] Initial GC collection. 0.00 seconds.
+[rank0]:[titan] 2026-06-07 20:19:02,506 - root - INFO - TikTokenizer built: #words 2256, BOS ID 2000, EOS ID 2001
+[rank0]:[titan] 2026-06-07 20:19:02,507 - root - INFO - Preparing c4_test dataset from tests/assets/c4_test
+[rank0]:[titan] 2026-06-07 20:19:02,664 - root - INFO - Building llama3 debugmodel with TransformerModelArgs(_enforced='This field is used to enforce all fields have defaults.', dim=256, n_layers=6, n_heads=16, n_kv_heads=None, vocab_size=2256, multiple_of=256, ffn_dim_multiplier=None, norm_eps=1e-05, rope_theta=500000, max_seq_len=2048, depth_init=True, use_flex_attn=False, attn_mask_type='causal', eos_id=2001)
+[rank0]:[titan] 2026-06-07 20:19:02,743 - root - INFO - TensorBoard logging enabled. Logs will be saved at /workspace/titan-exp/outputs/infrastructure-run/tb/20260607-2019
+[rank0]:[titan] 2026-06-07 20:19:02,743 - root - INFO - CUDA capacity: NVIDIA A40 with 44.43GiB memory
+[rank0]:[titan] 2026-06-07 20:19:02,744 - root - WARNING - Error running lspci: [Errno 2] No such file or directory: 'lspci', fallback to use device_name
+[rank0]:[titan] 2026-06-07 20:19:02,744 - root - WARNING - Peak flops undefined for: NVIDIA A40, fallback to A100
+[rank0]:[titan] 2026-06-07 20:19:02,744 - root - INFO - [34mModel llama3 debugmodel [31msize: 6,270,208 total parameters[39m
+[rank0]:[titan] 2026-06-07 20:19:02,745 - root - INFO - Applied selective activation checkpointing to the model
+[rank0]:[titan] 2026-06-07 20:19:02,779 - root - INFO - Applied FSDP to the model
+[rank0]:[titan] 2026-06-07 20:19:02,958 - root - WARNING - Error running lspci: [Errno 2] No such file or directory: 'lspci', fallback to use device_name
+[rank0]:[titan] 2026-06-07 20:19:02,958 - root - WARNING - Peak flops undefined for: NVIDIA A40, fallback to A100
+[rank0]:[titan] 2026-06-07 20:19:02,958 - root - INFO - Peak FLOPS used for computing MFU: 3.120e+14
+[rank0]:[titan] 2026-06-07 20:19:02,959 - root - INFO - CUDA memory usage for model: 0.03GiB(0.07%)
+[rank0]:[titan] 2026-06-07 20:19:02,967 - root - INFO - Checkpointing active. Checkpoints will be loaded from and saved to /workspace/titan-exp/outputs/infrastructure-run/checkpoint
+[rank0]:[titan] 2026-06-07 20:19:02,968 - root - INFO - Mixed precision training is handled by fully_shard
+[rank0]:[titan] 2026-06-07 20:19:02,968 - root - INFO - Trainer is initialized with local batch size 8, global batch size 16, gradient accumulation steps 1, sequence length 2048, total steps 500 (warmup 50).
+[rank0]:[titan] 2026-06-07 20:19:02,968 - root - INFO - Training starts at step 1.
+[rank0]:[titan] 2026-06-07 20:19:03,808 - root - INFO - [31mstep:  1  [32mloss:  8.2066  [33mmemory:  1.20GiB(2.71%)  [34mtps: 15,408  [36mtflops: 1.11  [35mmfu: 0.36%[39m
+[rank0]:[titan] 2026-06-07 20:19:03,809 - root - INFO - Saving the checkpoint (or staging if async is enabled).
+[rank0]:[titan] 2026-06-07 20:19:04,239 - root - INFO - [GC] GC collection invoked by checkpointer. 0.00 seconds.
+[rank0]:[titan] 2026-06-07 20:19:04,241 - root - INFO - Finished saving the checkpoint (or staging if async is enabled)in 0.43 seconds.
+[rank0]:[titan] 2026-06-07 20:19:04,241 - root - INFO - Synchronizing and adjusting timeout for all ProcessGroups to 0:01:40
+[rank0]:[titan] 2026-06-07 20:19:04,918 - root - INFO - [31mstep: 10  [32mloss:  8.1519  [33mmemory:  1.29GiB(2.91%)  [34mtps: 133,019  [36mtflops: 9.56  [35mmfu: 3.07%[39m
+[rank0]:[titan] 2026-06-07 20:19:05,600 - root - INFO - [31mstep: 20  [32mloss:  7.6243  [33mmemory:  1.29GiB(2.91%)  [34mtps: 240,353  [36mtflops: 17.28  [35mmfu: 5.54%[39m
+[rank0]:[titan] 2026-06-07 20:19:06,312 - root - INFO - [31mstep: 30  [32mloss:  6.6433  [33mmemory:  1.29GiB(2.91%)  [34mtps: 230,434  [36mtflops: 16.57  [35mmfu: 5.31%[39m
+[rank0]:[titan] 2026-06-07 20:19:07,005 - root - INFO - [31mstep: 40  [32mloss:  6.2140  [33mmemory:  1.29GiB(2.91%)  [34mtps: 236,753  [36mtflops: 17.02  [35mmfu: 5.46%[39m
+[rank0]:[titan] 2026-06-07 20:19:07,618 - root - INFO - [GC] Peforming periodical GC collection. 0.00 seconds.
+[rank0]:[titan] 2026-06-07 20:19:07,629 - root - WARNING - Dataset c4_test is being re-looped
+[rank0]:[titan] 2026-06-07 20:19:07,691 - root - INFO - [31mstep: 50  [32mloss:  6.0691  [33mmemory:  1.29GiB(2.91%)  [34mtps: 239,206  [36mtflops: 17.20  [35mmfu: 5.51%[39m
+[rank0]:[titan] 2026-06-07 20:19:08,372 - root - INFO - [31mstep: 60  [32mloss:  5.7649  [33mmemory:  1.29GiB(2.91%)  [34mtps: 240,991  [36mtflops: 17.33  [35mmfu: 5.55%[39m
+[rank0]:[titan] 2026-06-07 20:19:09,051 - root - INFO - [31mstep: 70  [32mloss:  5.5398  [33mmemory:  1.29GiB(2.91%)  [34mtps: 241,537  [36mtflops: 17.37  [35mmfu: 5.57%[39m
+[rank0]:[titan] 2026-06-07 20:19:09,728 - root - INFO - [31mstep: 80  [32mloss:  5.2515  [33mmemory:  1.29GiB(2.91%)  [34mtps: 242,099  [36mtflops: 17.41  [35mmfu: 5.58%[39m
+[rank0]:[titan] 2026-06-07 20:19:10,365 - root - INFO - [31mstep: 90  [32mloss:  4.8659  [33mmemory:  1.29GiB(2.91%)  [34mtps: 257,678  [36mtflops: 18.53  [35mmfu: 5.94%[39m
+[rank0]:[titan] 2026-06-07 20:19:10,913 - root - INFO - [GC] Peforming periodical GC collection. 0.00 seconds.
+[rank0]:[titan] 2026-06-07 20:19:10,923 - root - WARNING - Dataset c4_test is being re-looped
+[rank0]:[titan] 2026-06-07 20:19:10,984 - root - INFO - [31mstep: 100  [32mloss:  4.9610  [33mmemory:  1.29GiB(2.91%)  [34mtps: 265,424  [36mtflops: 19.09  [35mmfu: 6.12%[39m
+[rank0]:[titan] 2026-06-07 20:19:11,620 - root - INFO - [31mstep: 110  [32mloss:  4.8278  [33mmemory:  1.29GiB(2.91%)  [34mtps: 257,653  [36mtflops: 18.53  [35mmfu: 5.94%[39m
+[rank0]:[titan] 2026-06-07 20:19:12,281 - root - INFO - [31mstep: 120  [32mloss:  4.9069  [33mmemory:  1.29GiB(2.91%)  [34mtps: 248,107  [36mtflops: 17.84  [35mmfu: 5.72%[39m
+[rank0]:[titan] 2026-06-07 20:19:12,934 - root - INFO - [31mstep: 130  [32mloss:  4.6967  [33mmemory:  1.29GiB(2.91%)  [34mtps: 251,462  [36mtflops: 18.08  [35mmfu: 5.80%[39m
+[rank0]:[titan] 2026-06-07 20:19:13,566 - root - INFO - [31mstep: 140  [32mloss:  4.6969  [33mmemory:  1.29GiB(2.91%)  [34mtps: 259,375  [36mtflops: 18.65  [35mmfu: 5.98%[39m
+[rank0]:[titan] 2026-06-07 20:19:14,146 - root - INFO - [GC] Peforming periodical GC collection. 0.00 seconds.
+[rank0]:[titan] 2026-06-07 20:19:14,157 - root - WARNING - Dataset c4_test is being re-looped
+[rank0]:[titan] 2026-06-07 20:19:14,218 - root - INFO - [31mstep: 150  [32mloss:  4.6313  [33mmemory:  1.29GiB(2.91%)  [34mtps: 251,797  [36mtflops: 18.11  [35mmfu: 5.80%[39m
+[rank0]:[titan] 2026-06-07 20:19:14,893 - root - INFO - [31mstep: 160  [32mloss:  4.4264  [33mmemory:  1.29GiB(2.91%)  [34mtps: 242,734  [36mtflops: 17.45  [35mmfu: 5.59%[39m
+[rank0]:[titan] 2026-06-07 20:19:15,542 - root - INFO - [31mstep: 170  [32mloss:  4.5765  [33mmemory:  1.29GiB(2.91%)  [34mtps: 252,888  [36mtflops: 18.18  [35mmfu: 5.83%[39m
+[rank0]:[titan] 2026-06-07 20:19:16,188 - root - INFO - [31mstep: 180  [32mloss:  4.4450  [33mmemory:  1.29GiB(2.91%)  [34mtps: 254,249  [36mtflops: 18.28  [35mmfu: 5.86%[39m
+[rank0]:[titan] 2026-06-07 20:19:16,818 - root - INFO - [31mstep: 190  [32mloss:  4.4587  [33mmemory:  1.29GiB(2.91%)  [34mtps: 260,331  [36mtflops: 18.72  [35mmfu: 6.00%[39m
+[rank0]:[titan] 2026-06-07 20:19:17,404 - root - INFO - [GC] Peforming periodical GC collection. 0.00 seconds.
+[rank0]:[titan] 2026-06-07 20:19:17,416 - root - WARNING - Dataset c4_test is being re-looped
+[rank0]:[titan] 2026-06-07 20:19:17,478 - root - INFO - [31mstep: 200  [32mloss:  4.4581  [33mmemory:  1.29GiB(2.91%)  [34mtps: 248,598  [36mtflops: 17.88  [35mmfu: 5.73%[39m
+[rank0]:[titan] 2026-06-07 20:19:18,126 - root - INFO - [31mstep: 210  [32mloss:  4.4446  [33mmemory:  1.29GiB(2.91%)  [34mtps: 253,187  [36mtflops: 18.21  [35mmfu: 5.84%[39m
+[rank0]:[titan] 2026-06-07 20:19:18,789 - root - INFO - [31mstep: 220  [32mloss:  4.4269  [33mmemory:  1.29GiB(2.91%)  [34mtps: 247,525  [36mtflops: 17.80  [35mmfu: 5.70%[39m
+[rank0]:[titan] 2026-06-07 20:19:19,424 - root - INFO - [31mstep: 230  [32mloss:  4.3708  [33mmemory:  1.29GiB(2.91%)  [34mtps: 257,905  [36mtflops: 18.54  [35mmfu: 5.94%[39m
+[rank0]:[titan] 2026-06-07 20:19:20,067 - root - INFO - [31mstep: 240  [32mloss:  4.2993  [33mmemory:  1.29GiB(2.91%)  [34mtps: 255,143  [36mtflops: 18.35  [35mmfu: 5.88%[39m
+[rank0]:[titan] 2026-06-07 20:19:20,621 - root - INFO - [GC] Peforming periodical GC collection. 0.00 seconds.
+[rank0]:[titan] 2026-06-07 20:19:20,632 - root - WARNING - Dataset c4_test is being re-looped
+[rank0]:[titan] 2026-06-07 20:19:20,692 - root - INFO - [31mstep: 250  [32mloss:  4.3399  [33mmemory:  1.29GiB(2.91%)  [34mtps: 262,673  [36mtflops: 18.89  [35mmfu: 6.05%[39m
+[rank0]:[titan] 2026-06-07 20:19:20,692 - root - INFO - Saving the checkpoint (or staging if async is enabled).
+[rank0]:[titan] 2026-06-07 20:19:21,119 - root - INFO - [GC] GC collection invoked by checkpointer. 0.00 seconds.
+[rank0]:[titan] 2026-06-07 20:19:21,121 - root - INFO - Finished saving the checkpoint (or staging if async is enabled)in 0.43 seconds.
+[rank0]:[titan] 2026-06-07 20:19:21,779 - root - INFO - [31mstep: 260  [32mloss:  4.2773  [33mmemory:  1.29GiB(2.91%)  [34mtps: 150,829  [36mtflops: 10.85  [35mmfu: 3.48%[39m
+[rank0]:[titan] 2026-06-07 20:19:22,444 - root - INFO - [31mstep: 270  [32mloss:  4.3994  [33mmemory:  1.29GiB(2.91%)  [34mtps: 246,763  [36mtflops: 17.74  [35mmfu: 5.69%[39m
+[rank0]:[titan] 2026-06-07 20:19:23,086 - root - INFO - [31mstep: 280  [32mloss:  4.2500  [33mmemory:  1.29GiB(2.91%)  [34mtps: 255,361  [36mtflops: 18.36  [35mmfu: 5.89%[39m
+[rank0]:[titan] 2026-06-07 20:19:23,822 - root - INFO - [31mstep: 290  [32mloss:  4.2414  [33mmemory:  1.29GiB(2.91%)  [34mtps: 223,083  [36mtflops: 16.04  [35mmfu: 5.14%[39m
+[rank0]:[titan] 2026-06-07 20:19:24,411 - root - INFO - [GC] Peforming periodical GC collection. 0.00 seconds.
+[rank0]:[titan] 2026-06-07 20:19:24,423 - root - WARNING - Dataset c4_test is being re-looped
+[rank0]:[titan] 2026-06-07 20:19:24,486 - root - INFO - [31mstep: 300  [32mloss:  4.3153  [33mmemory:  1.29GiB(2.91%)  [34mtps: 246,956  [36mtflops: 17.76  [35mmfu: 5.69%[39m
+[rank0]:[titan] 2026-06-07 20:19:25,165 - root - INFO - [31mstep: 310  [32mloss:  4.1972  [33mmemory:  1.29GiB(2.91%)  [34mtps: 241,519  [36mtflops: 17.37  [35mmfu: 5.57%[39m
+[rank0]:[titan] 2026-06-07 20:19:25,830 - root - INFO - [31mstep: 320  [32mloss:  4.2994  [33mmemory:  1.29GiB(2.91%)  [34mtps: 246,765  [36mtflops: 17.74  [35mmfu: 5.69%[39m
+[rank0]:[titan] 2026-06-07 20:19:26,472 - root - INFO - [31mstep: 330  [32mloss:  4.1602  [33mmemory:  1.29GiB(2.91%)  [34mtps: 255,728  [36mtflops: 18.39  [35mmfu: 5.89%[39m
+[rank0]:[titan] 2026-06-07 20:19:27,110 - root - INFO - [31mstep: 340  [32mloss:  4.1356  [33mmemory:  1.29GiB(2.91%)  [34mtps: 256,776  [36mtflops: 18.46  [35mmfu: 5.92%[39m
+[rank0]:[titan] 2026-06-07 20:19:27,727 - root - INFO - [GC] Peforming periodical GC collection. 0.00 seconds.
+[rank0]:[titan] 2026-06-07 20:19:27,738 - root - WARNING - Dataset c4_test is being re-looped
+[rank0]:[titan] 2026-06-07 20:19:27,800 - root - INFO - [31mstep: 350  [32mloss:  3.8462  [33mmemory:  1.29GiB(2.91%)  [34mtps: 238,098  [36mtflops: 17.12  [35mmfu: 5.49%[39m
+[rank0]:[titan] 2026-06-07 20:19:28,504 - root - INFO - [31mstep: 360  [32mloss:  4.0281  [33mmemory:  1.29GiB(2.91%)  [34mtps: 232,740  [36mtflops: 16.74  [35mmfu: 5.36%[39m
+[rank0]:[titan] 2026-06-07 20:19:29,200 - root - INFO - [31mstep: 370  [32mloss:  4.1396  [33mmemory:  1.29GiB(2.91%)  [34mtps: 235,893  [36mtflops: 16.96  [35mmfu: 5.44%[39m
+[rank0]:[titan] 2026-06-07 20:19:29,872 - root - INFO - [31mstep: 380  [32mloss:  4.0387  [33mmemory:  1.29GiB(2.91%)  [34mtps: 244,131  [36mtflops: 17.55  [35mmfu: 5.63%[39m
+[rank0]:[titan] 2026-06-07 20:19:30,519 - root - INFO - [31mstep: 390  [32mloss:  4.0652  [33mmemory:  1.29GiB(2.91%)  [34mtps: 253,623  [36mtflops: 18.24  [35mmfu: 5.85%[39m
+[rank0]:[titan] 2026-06-07 20:19:31,103 - root - INFO - [GC] Peforming periodical GC collection. 0.00 seconds.
+[rank0]:[titan] 2026-06-07 20:19:31,113 - root - WARNING - Dataset c4_test is being re-looped
+[rank0]:[titan] 2026-06-07 20:19:31,173 - root - INFO - [31mstep: 400  [32mloss:  4.0478  [33mmemory:  1.29GiB(2.91%)  [34mtps: 250,616  [36mtflops: 18.02  [35mmfu: 5.78%[39m
+[rank0]:[titan] 2026-06-07 20:19:31,815 - root - INFO - [31mstep: 410  [32mloss:  3.9275  [33mmemory:  1.29GiB(2.91%)  [34mtps: 255,851  [36mtflops: 18.40  [35mmfu: 5.90%[39m
+[rank0]:[titan] 2026-06-07 20:19:32,470 - root - INFO - [31mstep: 420  [32mloss:  3.8984  [33mmemory:  1.29GiB(2.91%)  [34mtps: 250,127  [36mtflops: 17.99  [35mmfu: 5.76%[39m
+[rank0]:[titan] 2026-06-07 20:19:33,102 - root - INFO - [31mstep: 430  [32mloss:  3.9370  [33mmemory:  1.29GiB(2.91%)  [34mtps: 259,936  [36mtflops: 18.69  [35mmfu: 5.99%[39m
+[rank0]:[titan] 2026-06-07 20:19:33,728 - root - INFO - [31mstep: 440  [32mloss:  3.8855  [33mmemory:  1.29GiB(2.91%)  [34mtps: 261,823  [36mtflops: 18.83  [35mmfu: 6.03%[39m
+[rank0]:[titan] 2026-06-07 20:19:34,290 - root - INFO - [GC] Peforming periodical GC collection. 0.00 seconds.
+[rank0]:[titan] 2026-06-07 20:19:34,300 - root - WARNING - Dataset c4_test is being re-looped
+[rank0]:[titan] 2026-06-07 20:19:34,361 - root - INFO - [31mstep: 450  [32mloss:  3.8926  [33mmemory:  1.29GiB(2.91%)  [34mtps: 259,115  [36mtflops: 18.63  [35mmfu: 5.97%[39m
+[rank0]:[titan] 2026-06-07 20:19:35,021 - root - INFO - [31mstep: 460  [32mloss:  3.8015  [33mmemory:  1.29GiB(2.91%)  [34mtps: 248,751  [36mtflops: 17.89  [35mmfu: 5.73%[39m
+[rank0]:[titan] 2026-06-07 20:19:35,661 - root - INFO - [31mstep: 470  [32mloss:  3.9958  [33mmemory:  1.29GiB(2.91%)  [34mtps: 256,022  [36mtflops: 18.41  [35mmfu: 5.90%[39m
+[rank0]:[titan] 2026-06-07 20:19:36,287 - root - INFO - [31mstep: 480  [32mloss:  3.7083  [33mmemory:  1.29GiB(2.91%)  [34mtps: 262,379  [36mtflops: 18.87  [35mmfu: 6.05%[39m
+[rank0]:[titan] 2026-06-07 20:19:36,939 - root - INFO - [31mstep: 490  [32mloss:  3.8022  [33mmemory:  1.29GiB(2.91%)  [34mtps: 251,355  [36mtflops: 18.07  [35mmfu: 5.79%[39m
+[rank0]:[titan] 2026-06-07 20:19:37,570 - root - INFO - [GC] Peforming periodical GC collection. 0.00 seconds.
+[rank0]:[titan] 2026-06-07 20:19:37,580 - root - WARNING - Dataset c4_test is being re-looped
+[rank0]:[titan] 2026-06-07 20:19:37,644 - root - INFO - [31mstep: 500  [32mloss:  3.6827  [33mmemory:  1.29GiB(2.91%)  [34mtps: 232,910  [36mtflops: 16.75  [35mmfu: 5.37%[39m
+[rank0]:[titan] 2026-06-07 20:19:37,644 - root - INFO - Saving the checkpoint (or staging if async is enabled).
+[rank0]:[titan] 2026-06-07 20:19:37,644 - root - INFO - Saving a full checkpoint at last step, step 500.
+[rank0]:[titan] 2026-06-07 20:19:38,157 - root - INFO - [GC] GC collection invoked by checkpointer. 0.00 seconds.
+[rank0]:[titan] 2026-06-07 20:19:38,159 - root - INFO - Finished saving the checkpoint (or staging if async is enabled)in 0.51 seconds.
+[rank0]:[titan] 2026-06-07 20:19:38,159 - root - INFO - Sleeping 2 seconds for other ranks to complete
+[rank0]:[titan] 2026-06-07 20:19:40,160 - root - INFO - Training completed
+[rank0]:[titan] 2026-06-07 20:19:40,160 - root - INFO - Destroying the purge thread.
+[rank0]:[titan] 2026-06-07 20:19:40,481 - root - INFO - Process group destroyed.

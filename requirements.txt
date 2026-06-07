@@ -1,0 +1,6 @@
+# Pinned for 2x A40 (CUDA 12.4 driver 570.x)
+torch==2.6.0+cu124
+--extra-index-url https://download.pytorch.org/whl/cu124
+
+# TorchTitan v0.1.0 (installed editable from ./torchtitan submodule)
+-r torchtitan/requirements.txt

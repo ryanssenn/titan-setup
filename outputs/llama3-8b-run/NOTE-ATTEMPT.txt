@@ -1,0 +1,14 @@
+This is a stub directory from the Llama 3.1 8B experiment attempt
+(using the HF token supplied for this session).
+
+The run failed immediately at tokenizer download / load because the
+account did not yet have access to the gated model
+meta-llama/Meta-Llama-3.1-8B (HF 403).
+
+HF access approval is in progress.
+
+See:
+- ../llama3-8b-attempt.log (sanitized transcript)
+- Top-level README.md (current status + how to resume)
+
+No training, metrics, or checkpoints were produced for the 8B configuration.
