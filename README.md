@@ -7,7 +7,9 @@ TorchTitan infrastructure validation on a 2× NVIDIA A40 RunPod pod.
 ## Status
 
 - **Core infrastructure validated** (smoke test + 500-step run with full artifacts and graphs).
-- **Llama 3.1 8B run:** Attempted with provided HF token. Blocked on gated tokenizer (`meta-llama/Meta-Llama-3.1-8B`). HF access approval is in progress. Re-run pending.
+- **Llama 3.1 8B run:** Attempted with provided HF token. Blocked on gated tokenizer (`meta-llama/Meta-Llama-3.1-8B`). Awaiting approval from Meta Llama. Re-run pending.
+
+This experiment (execution, analysis, graph generation, and reporting) was performed using **Grok Build**.
 
 ## Compute Environment
 
@@ -38,7 +40,7 @@ export NCCL_IB_DISABLE=1
 | 1. Setup | TorchTitan v0.1.0 + PyTorch 2.6 cu124 | — | ✅ Done |
 | 2. Smoke test | `debug_model.toml` (tiny model) | 10 | ✅ Done |
 | 3. Infrastructure run | `configs/infrastructure_run.toml` | 500 | ✅ Done |
-| 4. Llama 3.1 8B run | `configs/llama3_8b_2gpu.toml` (real C4, seq 8k) | 500 | ⏸ Pending (HF gated access approval in progress) |
+| 4. Llama 3.1 8B run | `configs/llama3_8b_2gpu.toml` (real C4, seq 8k) | 500 | ⏸ Pending (awaiting approval from Meta Llama) |
 
 The debugmodel (6.27M params) + `c4_test` dataset (tiny, loops frequently) is sufficient to validate the full distributed pipeline without gated assets.
 
@@ -114,7 +116,7 @@ Observations:
 
 The 2× A40 FSDP2 stack (launch, sharding, metrics, checkpointing, long-running stability) is fully validated with visual evidence.
 
-The Llama 3.1 8B experiment (real dataset, 8k sequence length, meaningful batch) was attempted using the supplied token. It failed at the gated tokenizer download step (403 from HF). Approval for the model on the providing account is in progress.
+The Llama 3.1 8B experiment (real dataset, 8k sequence length, meaningful batch) was attempted using the supplied token. It failed at the gated tokenizer download step (403 from HF). We are awaiting approval from Meta Llama for the providing account. Re-run pending.
 
 **Next:**
 - Once a working HF token with access is available, re-run:
@@ -151,6 +153,10 @@ titan-exp/
 ├── requirements.txt
 └── torchtitan/                 # Pinned TorchTitan v0.1.0 checkout
 ```
+
+## Notes
+
+- Experiment execution, metric analysis, graph generation, and this report were prepared with **Grok Build**.
 
 ## References
 

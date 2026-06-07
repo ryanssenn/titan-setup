@@ -5,7 +5,7 @@ The run failed immediately at tokenizer download / load because the
 account did not yet have access to the gated model
 meta-llama/Meta-Llama-3.1-8B (HF 403).
 
-HF access approval is in progress.
+We are awaiting approval from Meta Llama.
 
 See:
 - ../llama3-8b-attempt.log (sanitized transcript)
