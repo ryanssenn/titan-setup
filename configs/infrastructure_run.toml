@@ -2,8 +2,8 @@
 # Uses debugmodel (no gated HF assets required).
 
 [job]
-dump_folder = "/workspace/titan-exp/outputs/infrastructure-run"
-description = "titan-exp infrastructure validation (4 GPU, 500 steps)"
+dump_folder = "outputs/infrastructure-run"
+description = "debug-model infrastructure validation (FSDP + selective AC, c4_test)"
 
 [profiling]
 enable_profiling = false

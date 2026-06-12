@@ -1,6 +1,6 @@
 # Reproduction Instructions
 
-This document provides standalone instructions to reproduce runs from this project on the current hardware (4x NVIDIA H100 80GB HBM3). All commands assume you have cloned this repository and are working from its root directory (`/workspace/titan-setup` in the original environment).
+This document provides standalone instructions to reproduce runs from this project. The launcher is portable and works from any clone location or current working directory (you just need the `titan-setup/` directory containing `run_experiment.sh`, `configs/`, and a `torchtitan/` checkout next to them). All examples assume you `cd` into the root of your clone of this repo.
 
 **Important:** The debug model validation can (and should) be run without any Hugging Face token. The full Llama 3.1 8B run requires a token with access to the gated `meta-llama` repositories.
 
@@ -22,7 +22,7 @@ It does **not** require a gated HF token.
 The project was originally validated against torchtitan v0.1.0. Clone it inside the titan-setup directory:
 
 ```bash
-cd /workspace/titan-setup
+cd titan-setup   # (or the directory where you cloned this repo)
 git clone --depth 1 -b v0.1.0 https://github.com/pytorch/torchtitan.git torchtitan
 ```
 
@@ -31,7 +31,7 @@ git clone --depth 1 -b v0.1.0 https://github.com/pytorch/torchtitan.git torchtit
 Install the requirements for v0.1.0 and pin a compatible PyTorch version (the original project used 2.6.0+cu124; 2.5.x+cu124 also worked in testing):
 
 ```bash
-cd /workspace/titan-setup/torchtitan
+cd titan-setup/torchtitan
 
 # Install torchtitan's requirements (from the v0.1.0 tree)
 pip install -r .ci/docker/requirements.txt
@@ -51,7 +51,7 @@ pip install --force-reinstall \
 If you want a completely fresh run:
 
 ```bash
-rm -rf /workspace/titan-setup/outputs/*
+rm -rf outputs/*
 ```
 
 ### 4. Run the debug model
@@ -61,7 +61,7 @@ Use the launcher with the project's infrastructure config (which targets the deb
 **Recommended quick validation (single GPU):**
 
 ```bash
-cd /workspace/titan-setup
+cd titan-setup
 
 NGPU=1 \
 CONFIG_FILE=configs/infrastructure_run.toml \
@@ -73,7 +73,7 @@ CONFIG_FILE=configs/infrastructure_run.toml \
 **Attempt on all available GPUs (4 in the target environment):**
 
 ```bash
-cd /workspace/titan-setup
+cd titan-setup
 
 NGPU=4 \
 CONFIG_FILE=configs/infrastructure_run.toml \
@@ -97,10 +97,11 @@ CONFIG_FILE=configs/infrastructure_run.toml \
 - No NCCL or import errors.
 
 **Notes / common issues**
-- The launcher now defaults to NGPU=4 and uses the correct paths for this workspace. It no longer forces the old A40-specific `NCCL_P2P_DISABLE=1` / `NCCL_IB_DISABLE=1`.
+- The launcher (`run_experiment.sh`) is now fully portable: it locates `torchtitan/` and `configs/` relative to itself using the script location. Relative `CONFIG_FILE=...` values (exactly as written in the examples) work and are automatically resolved before changing directory.
+- It defaults to NGPU=4, injects a sensible `--job.dump_folder` under `outputs/<config-name>` (next to your titan-setup clone) if you don't override it, and no longer forces the old A40-specific `NCCL_P2P_DISABLE=1` / `NCCL_IB_DISABLE=1`.
 - On 4 GPUs you may encounter NCCL initialization errors ("unhandled cuda error", "operation cannot be performed in the present state"). If this happens, fall back to `NGPU=1` for the quick debug validation.
-- If you see `ModuleNotFoundError: No module named 'tyro'` or `spmd_types`, re-check that you installed the requirements + pinned torch versions above.
-- The run will create output under the `dump_folder` defined in the config (defaults to something like `outputs/infrastructure-run`).
+- If you see `ModuleNotFoundError: No module named 'tyro'` (or import errors around `torch.distributed.tensor` / DTensor), re-check that you installed the requirements + pinned torch==2.6.0+cu124 exactly as shown above. The v0.1.0 tree is sensitive to the PyTorch version.
+- The run will create output under the `dump_folder` (the launcher ensures a clean default under your clone's `outputs/` directory).
 
 ### 5. Inspect results
 
@@ -111,6 +112,8 @@ After a successful run you can look at:
 - The config itself (`configs/infrastructure_run.toml`) controls most behavior (you can override many fields on the command line with `--section.key value`).
 
 A 500-step run can be performed the same way by omitting (or increasing) the `--training.steps` override.
+
+The launcher will automatically place results in `outputs/infrastructure-run/` (or the basename of whatever config you point at) unless you pass an explicit `--job.dump_folder`.
 
 ## Historical / Original A40 Instructions (for reference only)
 
@@ -129,10 +132,6 @@ NGPU=2 \
 
 ## Llama 3.1 8B Run (Requires Gated HF Token)
 
-See the section below. The debug model above does **not** require any Hugging Face token.
-
-## Llama 3.1 8B Run (Requires Gated HF Token)
-
 The debug model instructions above do **not** require any Hugging Face access.
 
 Once you have a token with access to the gated `meta-llama` repositories:
@@ -140,7 +139,7 @@ Once you have a token with access to the gated `meta-llama` repositories:
 1. Download the tokenizer (run from inside the torchtitan clone):
 
 ```bash
-cd /workspace/titan-setup/torchtitan
+cd titan-setup/torchtitan
 python torchtitan/scripts/download_tokenizer.py \
   --repo_id meta-llama/Llama-3.1-8B \
   --hf_token "$HF_TOKEN" \
@@ -152,7 +151,7 @@ python torchtitan/scripts/download_tokenizer.py \
 2. Run the 8B experiment (example using the updated launcher):
 
 ```bash
-cd /workspace/titan-setup
+cd titan-setup
 NGPU=4 CONFIG_FILE=configs/llama3_8b_2gpu.toml ./run_experiment.sh \
   --training.steps 50   # use a small number for a short validation run
 ```
