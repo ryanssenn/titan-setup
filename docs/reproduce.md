@@ -134,31 +134,72 @@ NGPU=2 \
 
 The debug model instructions above do **not** require any Hugging Face access.
 
-Once you have a token with access to the gated `meta-llama` repositories:
+**Prerequisite:** You need a Hugging Face token from an account that has been explicitly approved by Meta for the gated `meta-llama/Llama-3.1-8B` (or `Meta-Llama-3.1-8B`) repository. A regular HF token is not sufficient; approval can take time (see `docs/8b-attempt.md`).
 
-1. Download the tokenizer (run from inside the torchtitan clone):
+1. Set your HF token and download the tokenizer (run from inside the torchtitan clone):
+
+**Recommended approach: use a `.env` file (or `hf_token.env`)**
+
+This is the simplest, most reproducible way — especially in agent/tool sandboxes (like this one) where plain `export` often doesn't propagate to command executions.
 
 ```bash
-cd titan-setup/torchtitan
-python torchtitan/scripts/download_tokenizer.py \
-  --repo_id meta-llama/Llama-3.1-8B \
-  --hf_token "$HF_TOKEN" \
-  --local_dir assets/tokenizer
+# One-time setup (in titan-setup root)
+cp hf_token.env.example .env
+# edit .env and put your real approved token
+chmod 600 .env
 ```
 
-   After this step you should have a file at `assets/tokenizer/original/tokenizer.model` (or adjust the path in `configs/llama3_8b_2gpu.toml` accordingly).
-
-2. Run the 8B experiment (example using the updated launcher):
+Then download using the provided helper (recommended):
 
 ```bash
 cd titan-setup
-NGPU=4 CONFIG_FILE=configs/llama3_8b_2gpu.toml ./run_experiment.sh \
-  --training.steps 50   # use a small number for a short validation run
+./download_8b_tokenizer.sh
 ```
+
+The helper automatically loads `HF_TOKEN` from the environment **or** from `.env` / `hf_token.env` etc. in the project root. It then calls the torchtitan downloader with the correct arguments and verifies the output file.
+
+**Alternative (manual, no helper):**
+
+```bash
+cd titan-setup/torchtitan
+
+# Load from .env if present (works for both normal shells and agent tools)
+if [[ -f ../.env ]]; then
+  HF_TOKEN=$(grep '^HF_TOKEN=' ../.env | head -1 | cut -d= -f2- | tr -d '"' | tr -d "'")
+fi
+
+python scripts/download_tokenizer.py \
+  --repo_id meta-llama/Meta-Llama-3.1-8B \
+  --hf_token "$HF_TOKEN" \
+  --local_dir assets/tokenizer
+
+ls -l assets/tokenizer/original/tokenizer.model   # verify
+```
+
+The `.env` file is gitignored (see `.gitignore`) and the helper + instructions above work whether you use `export HF_TOKEN=...` (normal interactive shells) or a file (agent/tool environments).
+
+   If the download fails with 403, your account is not yet approved for the gated model.
+
+2. Run the 8B experiment (example using the updated launcher; NGPU=1 recommended for quick validation to avoid potential NCCL issues on some 4-GPU setups; use 4 when ready):
+
+Once the tokenizer is successfully downloaded, the training run itself does **not** need the HF token (it only needs the local file).
+
+```bash
+cd titan-setup
+
+NGPU=1 \
+CONFIG_FILE=configs/llama3_8b_2gpu.toml \
+./run_experiment.sh \
+  --job.dump_folder outputs/llama3-8b-run \
+  --training.steps 50 \
+  --metrics.log_freq 5   # use a small number for a short validation run
+```
+
+   The explicit `--job.dump_folder` ensures artifacts land in the documented `outputs/llama3-8b-run/` (the launcher would otherwise derive a name from the config filename).
 
 This uses the real `c4` dataset and sequence length 8192.
 
-See `docs/8b-attempt.md` for background on the previous blocked attempt.
+See `docs/8b-attempt.md` for background on the previous blocked attempt and how to resume once approved.
 
 ## Viewing Results
 
@@ -166,6 +207,7 @@ Results are written to the `dump_folder` specified in the active config (commonl
 
 Useful commands:
 
-- TensorBoard: `tensorboard --logdir outputs/infrastructure-run/tb --port 6006`
-- List recent logs: `ls -l outputs/`
+- TensorBoard (debug/infra): `tensorboard --logdir outputs/infrastructure-run/tb --port 6006`
+- TensorBoard (8B): `tensorboard --logdir outputs/llama3-8b-run/tb --port 6006`
+- List recent logs / artifacts: `ls -l outputs/`
 - Full logs are also emitted to stdout/stderr by the launcher.

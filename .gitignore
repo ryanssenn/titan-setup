@@ -27,3 +27,10 @@ torchtitan/
 # HF / cache
 .cache/
 huggingface/
+
+# Secrets / tokens (never commit these)
+.env
+.env.*
+*.env
+hf_token*
+.hf_token*
