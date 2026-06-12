@@ -1,37 +1,37 @@
-# titan-exp
+# TorchTitan Validation
 
-TorchTitan 2-GPU FSDP infrastructure validation on A40.
+A documented validation of TorchTitan distributed training on a multi-GPU setup.
 
-**Status:** Core stack validated. Llama 3.1 8B awaiting approval from Meta Llama.
+## Purpose
 
-Prepared with **Grok Build**.
+This project verifies that TorchTitan can successfully launch, train, checkpoint, and log metrics in a distributed environment using FSDP.
+
+The goal is not to train a new model or present research results. The goal is to validate a working TorchTitan setup and document the configuration, environment, and results.
+
+## Environment
+
+| Component | Value |
+|------------|---------|
+| Framework | TorchTitan v0.1.0 |
+| PyTorch | 2.6.0 + CUDA 12.4 |
+| Hardware | 2× NVIDIA A40 |
+| Training Mode | FSDP |
 
 ## Results
 
-**Loss curve**
+Artifacts, logs, and generated graphs are available under `outputs/`.
 
-![Loss curve](outputs/infrastructure-run/graphs/01_loss_curve.png)
-
-**Metrics dashboard**
-
-![Dashboard](outputs/infrastructure-run/graphs/00_metrics_dashboard.png)
-
-500-step run: loss dropped from 8.2 to 3.7 with steady throughput and stable memory. Logs and graphs in `outputs/infrastructure-run/`.
-
-## Reproduce
+## Run
 
 ```bash
 ./run_experiment.sh
 ```
 
-See `docs/reproduce.md` for smoke test, 8B (pending Meta Llama approval), and TensorBoard.
+See `docs/reproduce.md` for full reproduction instructions.
 
 ## Sources
 
-- TorchTitan v0.1.0 (https://github.com/pytorch/torchtitan)
+- TorchTitan v0.1.0 
 - Compute: RunPod 2× NVIDIA A40
-- Raw metrics and logs produced by TorchTitan
 - Graphs generated from logs using matplotlib
-- Analysis and report prepared with **Grok Build**
-
-See `docs/details.md` for full environment, metrics tables, and experiment details.
+- Analysis prepared with Grok Build
