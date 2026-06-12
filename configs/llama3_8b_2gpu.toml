@@ -7,7 +7,7 @@
 
 [job]
 dump_folder = "/workspace/titan-exp/outputs/llama3-8b-run"
-description = "titan-exp Llama 3.1 8B infrastructure validation (2 GPU, 500 steps)"
+description = "titan-exp Llama 3.1 8B infrastructure validation (4 GPU, 500 steps)"
 
 [profiling]
 enable_profiling = false

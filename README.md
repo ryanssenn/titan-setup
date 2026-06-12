@@ -14,7 +14,7 @@ The goal is not to train a new model or present research results. The goal is to
 |------------|---------|
 | Framework | TorchTitan v0.1.0 |
 | PyTorch | 2.6.0 + CUDA 12.4 |
-| Hardware | 2× NVIDIA A40 |
+| Hardware | 4× NVIDIA H100 80GB HBM3 |
 | Training Mode | FSDP |
 
 ## Results
@@ -32,6 +32,6 @@ See `docs/reproduce.md` for full reproduction instructions.
 ## Sources
 
 - TorchTitan v0.1.0 
-- Compute: RunPod 2× NVIDIA A40
+- Compute: 4× NVIDIA H100 80GB HBM3
 - Graphs generated from logs using matplotlib
 - Analysis prepared with Grok Build
