@@ -1,3 +1,0 @@
-See docs/8b-attempt.md for the current status of the Llama 3.1 8B run (awaiting approval from Meta Llama) and details of the previous blocked attempt.
-
-This stub directory was created during the attempt. No training occurred.
