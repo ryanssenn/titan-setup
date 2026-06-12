@@ -1,9 +1,9 @@
-# Infrastructure validation run: 2x A40, FSDP2, standard stack
+# Infrastructure validation run: 4x H100, FSDP2, standard stack
 # Uses debugmodel (no gated HF assets required).
 
 [job]
 dump_folder = "/workspace/titan-exp/outputs/infrastructure-run"
-description = "titan-exp infrastructure validation (2 GPU, 500 steps)"
+description = "titan-exp infrastructure validation (4 GPU, 500 steps)"
 
 [profiling]
 enable_profiling = false
