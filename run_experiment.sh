@@ -1,23 +1,23 @@
 #!/usr/bin/env bash
-# titan-exp experiment launcher (2x A40)
+# titan-setup experiment launcher (4x H100)
 set -euo pipefail
 
-cd /workspace/titan-exp/torchtitan
+cd /workspace/titan-setup/torchtitan
 
-NGPU="${NGPU:-2}"
+# Make torchtitan importable when running as -m torchtitan.train
+export PYTHONPATH="${PWD}:${PYTHONPATH:-}"
+
+NGPU="${NGPU:-4}"
 LOG_RANK="${LOG_RANK:-0}"
-CONFIG_FILE="${CONFIG_FILE:-/workspace/titan-exp/configs/infrastructure_run.toml}"
+CONFIG_FILE="${CONFIG_FILE:-/workspace/titan-setup/configs/infrastructure_run.toml}"
 
-# Required on this RunPod pod: NCCL P2P hangs without these.
-export NCCL_P2P_DISABLE=1
-export NCCL_IB_DISABLE=1
+# Note: NCCL_P2P_DISABLE / NCCL_IB_DISABLE were required on the old A40 RunPod pod
+# but are harmful on modern H100 setups (disable fast P2P). Do not set them here.
 export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"
 
-echo "=== titan-exp run ==="
+echo "=== titan-setup run ==="
 echo "GPUs: ${NGPU}"
 echo "Config: ${CONFIG_FILE}"
-echo "NCCL_P2P_DISABLE=${NCCL_P2P_DISABLE}"
-echo "NCCL_IB_DISABLE=${NCCL_IB_DISABLE}"
 echo "====================="
 
 torchrun \
