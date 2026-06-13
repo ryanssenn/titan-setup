@@ -145,21 +145,6 @@ After a successful run you can look at:
 - List created artifacts: `ls -l outputs/infrastructure_run/` (you will see `checkpoint/step-1/`, `checkpoint/step-10/`, `tb/`, `comm_trace/`)
 - The active config and overrides control everything; use `--section.key value` on the command line for quick experiments.
 
-## Historical / Original A40 Instructions (for reference only)
-
-The commands below were used on the original 2× NVIDIA A40 RunPod pod. They are kept here for historical context only. Use the "Initial Debug Model" section above when working on the current 4× H100 hardware.
-
-```bash
-# Historical smoke test (10 steps)
-NGPU=2 \
-  CONFIG_FILE=torchtitan/torchtitan/models/llama3/train_configs/debug_model.toml \
-  ./run_experiment.sh \
-  --job.dump_folder outputs/smoke-test
-
-# Historical full infrastructure validation
-./run_experiment.sh
-```
-
 ## Llama 3.1 8B Run (Requires Gated HF Token)
 
 The debug model instructions above do **not** require any Hugging Face access.
