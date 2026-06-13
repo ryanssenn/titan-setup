@@ -17,6 +17,8 @@ The goal is not to train a new model or present research results. The goal is to
 | Hardware | 4× NVIDIA H100 80GB HBM3 |
 | Training Mode | FSDP |
 
+**Current status on this pod:** 1-GPU and 2-GPU debug model runs (using `configs/infrastructure_run.toml`) complete successfully and exercise the full pipeline (including real FSDP sharding on 2 GPUs). 4-GPU runs currently fail at NCCL initialization (see `docs/reproduce.md` for details and the exact error).
+
 ## Results
 
 The primary validated work is the full TorchTitan + FSDP pipeline using the tiny `debugmodel` (infrastructure validation run). See `outputs/infrastructure_run/`.
@@ -45,7 +47,7 @@ NGPU=1 CONFIG_FILE=configs/infrastructure_run.toml \
 
 Output lands in `outputs/infrastructure_run/`.
 
-For 4 GPUs, the full 500-step run, Llama 3.1 8B, and troubleshooting, see `docs/reproduce.md`.
+For multi-GPU (NGPU=2 for FSDP validation), full 500-step runs, Llama 3.1 8B, and current 4-GPU limitations + troubleshooting, see `docs/reproduce.md`.
 
 ### Llama 3.1 8B
 
@@ -60,6 +62,6 @@ Then use `CONFIG_FILE=configs/llama3_8b_2gpu.toml` (full commands in `docs/repro
 ## Sources
 
 - TorchTitan v0.1.0 
-- Compute: 4× NVIDIA H100 80GB HBM3
+- Compute: 4× NVIDIA H100 80GB HBM3 (reliable reproduction confirmed on 1-2 GPUs on current pod)
 - Graphs generated from logs using matplotlib
 - Analysis prepared with Grok Build

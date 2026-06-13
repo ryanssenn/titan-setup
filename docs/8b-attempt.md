@@ -16,16 +16,16 @@ Latest attempt (after successful download):
 - Tokenizer download via `./download_8b_tokenizer.sh` (using `.env`) succeeded and produced `torchtitan/assets/tokenizer/original/tokenizer.model`.
 - Training launch with `NGPU=4 CONFIG_FILE=configs/llama3_8b_2gpu.toml ./run_experiment.sh --job.dump_folder outputs/llama3-8b-run --training.steps 50 ...` failed immediately in `Trainer` init during `set_determinism` → `torch.distributed.broadcast`.
 - Error: `ncclUnhandledCudaError: Call to CUDA function failed. Last error: Cuda failure 401 'the operation cannot be performed in the present state'`.
-- This matches the pre-existing caveat in `docs/reproduce.md` ("On 4 GPUs you may encounter NCCL initialization errors...").
+- This matches the documented current limitation in `docs/reproduce.md` (4-GPU runs fail at NCCL init with Cuda 401 even with the P2P/IB disables; 1-GPU and 2-GPU are the reliable paths on this pod).
 
-The download path is now reproducible. The 4-GPU NCCL issue on this H100 setup remains (see historical notes in reproduce.md; common workaround is `NGPU=1` for initial validation or the old `NCCL_P2P_DISABLE=1 NCCL_IB_DISABLE=1` flags).
+The download path is now reproducible. The 4-GPU NCCL issue on this H100 setup remains (see `docs/reproduce.md`; reliable paths for initial validation are NGPU=1 and NGPU=2. The old `NCCL_P2P_DISABLE=1 NCCL_IB_DISABLE=1` flags have not resolved 4-GPU on the current pod).
 
 See the updated `NOTE-ATTEMPT.txt` in `outputs/llama3-8b-run/` and the reproduction logs for full details.
 
 ## How to Resume
 
 1. Use the `.env` + helper for the tokenizer (see `docs/reproduce.md`).
-2. For a first successful end-to-end validation now that the tokenizer works, try `NGPU=1` (as recommended in docs for quick 8B validation).
+2. For a first successful end-to-end validation now that the tokenizer works, try `NGPU=1` (fastest) or `NGPU=2` (exercises real FSDP sharding). Both are currently reliable on this pod for the debug model and recommended for initial 8B validation.
 3. Once basic 8B training succeeds on 1 GPU, investigate NCCL flags or other env tweaks for 4-GPU.
 4. Full 500-step run can follow.
 

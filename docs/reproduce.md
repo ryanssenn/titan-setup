@@ -58,7 +58,9 @@ rm -rf outputs/*
 
 Use the launcher with the project's infrastructure config (which targets the debug model) and override the number of steps for a fast sanity check.
 
-**Recommended quick validation (single GPU):**
+**Recommended quick validation (NGPU=1 or 2):**
+
+Use NGPU=1 for the fastest smoke test. Use NGPU=2 when you want to validate actual FSDP sharding (the debug model + c4_test is sufficient for this).
 
 ```bash
 cd titan-setup
@@ -70,9 +72,23 @@ CONFIG_FILE=configs/infrastructure_run.toml \
   --metrics.log_freq 2
 ```
 
-**Attempt on all available GPUs (4 in the target environment):**
+**Multi-GPU validation (NGPU=2 recommended for exercising real FSDP):**
 
-Validated 4-GPU command (includes the NCCL disables that are required on some H100 setups for FSDP init to succeed):
+NGPU=2 runs FSDP sharding (`data_parallel_shard_degree=-1`) across the available GPUs and has been confirmed to work on the current pod for the debug model:
+
+```bash
+cd titan-setup
+
+NGPU=2 \
+CONFIG_FILE=configs/infrastructure_run.toml \
+./run_experiment.sh \
+  --training.steps 10 \
+  --metrics.log_freq 2
+```
+
+**Note on 4 GPUs (current pod limitation):**
+
+The following command (with the NCCL peer-to-peer / IB disables that helped on some earlier pods) currently fails on this 4× H100 setup:
 
 ```bash
 cd titan-setup
@@ -85,34 +101,42 @@ CONFIG_FILE=configs/infrastructure_run.toml \
   --metrics.log_freq 2
 ```
 
-**What to expect on success (observed on this 4× H100 setup with the instructions above):**
+It fails very early (before training steps) during `Trainer` initialization in `set_determinism` → `torch.distributed.broadcast` with:
+
+```
+torch.distributed.DistBackendError: NCCL error ... ncclUnhandledCudaError: Call to CUDA function failed.
+Last error: Cuda failure 401 'the operation cannot be performed in the present state'
+```
+
+Neither running without the NCCL flags nor prefixing them has resolved it on the current pod/container. 1-GPU and 2-GPU paths remain reliable for validating the pipeline. See the "Notes / common issues" section below for more context and workarounds to try (pod restart, driver updates, etc.).
+
+**What to expect on success (NGPU=1 or NGPU=2 on current hardware):**
 - Launcher prints "=== titan-setup run ===" + "GPUs: N" + the resolved config path.
 - "Starting job: debug-model infrastructure validation (FSDP + selective AC, c4_test)"
 - Tokenizer + "Preparing c4_test dataset from tests/assets/c4_test" (2000 examples generated quickly).
 - "Building llama3 debugmodel ... dim=256, n_layers=6 ..." → "Model llama3 debugmodel size: 6,270,208 total parameters"
 - "Applied selective activation checkpointing"
+- On NGPU=2 you will additionally see: "Applied FSDP to the model" and a 1-D device mesh log (`Building 1-D device mesh with ['dp_shard'], [2]`).
 - "TensorBoard logging enabled. Logs will be saved at .../outputs/infrastructure_run/tb/..."
 - Several warnings are normal: warmup steps adjusted (because 10-step short run), "lspci" not found (harmless), etc.
-- Training progress (example with log_freq=2, NGPU=1):
-  ```
-  step:  1  loss:  8.2141  memory:  1.39GiB(1.75%)  tps: 24,654  ... mfu: 0.18%
-  ...
-  step: 10  loss:  7.6282  memory:  1.51GiB(1.90%)  tps: 455,760 ... mfu: 3.31%
-  ```
-  (Loss decreases; throughput and MFU rise after initial steps.)
-- Checkpoints: "Saving the checkpoint..." at step 1 and "Saving a full checkpoint at last step, step 10" → directories `checkpoint/step-1/` and `checkpoint/step-10/`.
+- Training progress examples (log_freq=2):
+  - NGPU=1: loss drops (e.g. ~8.20 → ~7.66), throughput ramps from low tens of k tps to hundreds of k tps, MFU rises to a few percent.
+  - NGPU=2: similar loss curve, global batch size doubles (16), real FSDP sharding is active.
+- Checkpoints: "Saving the checkpoint..." at step 1 and "Saving a full checkpoint at last step, step 10" → directories under `checkpoint/`.
 - "Training completed"
 - "Process group destroyed."
-- No NCCL errors, no missing module errors.
+- No NCCL errors (for 1-2 GPUs).
 - Artifacts under `outputs/infrastructure_run/` (the launcher derives the folder name from the basename of the .toml you pointed at via CONFIG_FILE). Subdirs: `checkpoint/`, `tb/`, `comm_trace/`.
 
-**Notes / common issues (from actual 4-GPU execution while writing these instructions)**
-- **NCCL on 4 GPUs (the main blocker when targeting 4-GPU debug)**: Direct runs with `NGPU=4` (both with and without `NCCL_P2P_DISABLE=1 NCCL_IB_DISABLE=1` prefixed) consistently failed during Trainer init at the first `torch.distributed.broadcast` inside `set_determinism`, with `ncclUnhandledCudaError ... Cuda failure 401 'the operation cannot be performed in the present state'`. The disables that helped on prior pods were not sufficient on this H100 setup. The primary instructions therefore use the reliable `NGPU=1` path (which still runs real FSDP sharding + the complete end-to-end pipeline). The 4-GPU command is provided as an explicit "try this" variant with the known risk and fallback.
+**Notes / common issues**
+- **Current pod status (debug model):** NGPU=1 works reliably (basic pipeline). NGPU=2 works reliably and exercises real FSDP2 sharding + global batch scaling. NGPU=4 (even with `NCCL_P2P_DISABLE=1 NCCL_IB_DISABLE=1`) currently fails during distributed initialization with the NCCL `Cuda failure 401` error shown above. This appears specific to the current RunPod container/pod state; the same flags resolved similar issues on earlier pods.
+- **Clear checkpoints when changing GPU count:** Checkpoints contain per-rank dataloader state (e.g. `dataloader.dp_rank_0`, `dataloader.dp_rank_1`). Switching from NGPU=1 to NGPU=2 (or vice versa) without clearing the checkpoint folder will cause `RuntimeError: Missing key in checkpoint state_dict: dataloader.dp_rank_X`. Run `rm -rf outputs/infrastructure_run/checkpoint` (or the relevant dump folder) between different world sizes.
 - The launcher is fully portable (locates torchtitan/ relative to itself, auto-derives dump_folder from the CONFIG_FILE basename → `outputs/infrastructure_run/` in this case).
 - Benign noise after pip: root-user warning + "new pip available". Detached HEAD after the torchtitan tag clone is expected.
 - Other normal short-run warnings: warmup/decay step count adjustments, missing `lspci`.
 - Tyro / DTensor import errors almost always mean the torch==2.6.0+cu124 pin step did not fully take effect.
 - For the full 500-step validation simply omit the two `--training.steps 10 --metrics.log_freq 2` overrides. On this hardware class it finishes quickly.
+- If you need 4-GPU operation and it fails: try restarting the pod, ensuring a clean environment (no stale NCCL state), or testing the NCCL flags plus `NCCL_DEBUG=INFO` for more diagnostics. Report the exact pod/driver/CUDA/NCCL versions if the issue persists across pods.
 
 ### 5. Inspect results
 
@@ -186,7 +210,7 @@ The `.env` file is gitignored (see `.gitignore`) and the helper + instructions a
 
    If the download fails with 403, your account is not yet approved for the gated model.
 
-2. Run the 8B experiment (example using the updated launcher; NGPU=1 recommended for quick validation to avoid potential NCCL issues on some 4-GPU setups; use 4 when ready):
+2. Run the 8B experiment (example using the updated launcher; NGPU=1 or NGPU=2 recommended for initial validation to avoid potential NCCL issues on 4-GPU setups; use 4 when ready and the limitation is resolved):
 
 Once the tokenizer is successfully downloaded, the training run itself does **not** need the HF token (it only needs the local file).
 
@@ -200,6 +224,8 @@ CONFIG_FILE=configs/llama3_8b_2gpu.toml \
   --training.steps 50 \
   --metrics.log_freq 5   # use a small number for a short validation run
 ```
+
+NGPU=2 is also a good choice for the 8B model as it exercises actual FSDP sharding while staying within the configurations that are currently reliable on this pod.
 
    The explicit `--job.dump_folder` ensures artifacts land in the documented `outputs/llama3-8b-run/` (the launcher would otherwise derive a name from the config filename).
 
