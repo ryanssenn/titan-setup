@@ -16,16 +16,25 @@ This file contains the detailed environment, configuration, and results tables t
 
 **Note:** Newer TorchTitan (main) requires PyTorch ≥2.8 and CUDA 13, which is incompatible with this pod's driver and CUDA version. v0.1.0 was used because it supports PyTorch 2.6 + cu124.
 
-## Required NCCL Settings
+## NCCL / Multi-GPU Notes (Current Pod)
 
-On this specific RunPod pod, multi-GPU NCCL communication hangs unless peer-to-peer is disabled:
+On some RunPod pods (including earlier instances used for this project), multi-GPU NCCL communication required disabling peer-to-peer and InfiniBand:
 
 ```bash
 export NCCL_P2P_DISABLE=1
 export NCCL_IB_DISABLE=1
 ```
 
-The launcher script `run_experiment.sh` sets these automatically. Without them, FSDP all-gather operations time out.
+These flags are **not** set automatically by `run_experiment.sh`.
+
+**Observed behavior on the current 4× H100 pod (as of 2026-06-13):**
+- NGPU=1: Works (no distributed setup required).
+- NGPU=2: Works reliably and exercises real FSDP2 (`data_parallel_shard_degree=-1`).
+- NGPU=4: Fails early during process group initialization / `set_determinism` (inside `torch.distributed.broadcast`) with `ncclUnhandledCudaError: Call to CUDA function failed. Last error: Cuda failure 401 'the operation cannot be performed in the present state'`.
+
+Prefixing the NCCL disables (as shown in older reproduction steps) has not resolved the 4-GPU failure on this pod/container. The issue may be transient to the specific pod, driver state, or CUDA/NCCL runtime. If 4-GPU operation is required, a pod restart or different instance is currently the most practical path.
+
+The debug model validation can still be performed end-to-end with NGPU=1 or NGPU=2.
 
 ## Experiment Plan
 
@@ -38,19 +47,23 @@ The launcher script `run_experiment.sh` sets these automatically. Without them, 
 
 The debug "llama3 debugmodel" (6.27M parameters: dim=256, 6 layers) together with the small `c4_test` dataset is sufficient to validate the full distributed training pipeline (FSDP2, metrics, checkpointing, stability) without requiring any gated Hugging Face assets.
 
+**Note on GPU count for reproduction:** On the current pod, phases 2 and 3 (debug model smoke + infrastructure validation) can be reproduced end-to-end using NGPU=1 or NGPU=2. The 4-GPU configuration in the plan was achieved on compatible hardware/pods in the past.
+
 ## Standard Stack (No Extras)
 
-- FSDP2 (`data_parallel_shard_degree=-1` → 4-GPU sharded data parallel)
+- FSDP2 (`data_parallel_shard_degree=-1` — actual degree matches `NGPU` at runtime; e.g. 2-way sharding when `NGPU=2`)
 - Selective activation checkpointing (`selective_ac_option="2"`)
 - bf16 mixed precision (handled inside `fully_shard`)
 - Fused AdamW optimizer
 - No torch.compile, no Float8, no Tensor Parallel, Pipeline Parallel, or Context Parallel
 
+On the current pod, reliable end-to-end runs (including FSDP) have been confirmed with NGPU=1 and NGPU=2 for the debug model. 4-GPU FSDP currently hits the NCCL initialization error described above.
+
 ## Detailed Results Tables
 
 ### Smoke Test (10 steps)
 
-Completed cleanly in ~13 seconds. Loss decreased monotonically. Both GPUs participated via FSDP.
+Completed cleanly in ~13 seconds on NGPU=2 (or equivalent short runs). Loss decreased monotonically. Real FSDP sharding was active when run with NGPU=2.
 
 | Metric | Step 1 | Step 10 |
 |--------|--------|---------|
@@ -63,7 +76,7 @@ Completed cleanly in ~13 seconds. Loss decreased monotonically. Both GPUs partic
 
 **Config:** `configs/infrastructure_run.toml`  
 **Log:** `outputs/infrastructure-run.log`  
-**Wall time:** ~38 seconds
+**Wall time:** ~38 seconds (from a previously successful run)
 
 | Metric | Step 1 | Step 250 | Step 500 |
 |--------|--------|----------|----------|
@@ -72,16 +85,15 @@ Completed cleanly in ~13 seconds. Loss decreased monotonically. Both GPUs partic
 | Throughput (global) | 15,408 tps | ~250k tps | 232,910 tps |
 | MFU (A100 reference) | 0.36% | ~6% | 5.37% |
 
-**Validation checks passed:**
+**Validation checks passed (from the run that produced the committed artifacts):**
 - 500 steps completed with no OOM
 - Loss trended downward consistently (8.21 → 3.68)
-- FSDP2 correctly sharded the model across both GPUs
-- Checkpoints saved at steps 1, 250, and 500 (DCP format, 2 shards each, ~73-74 MB per checkpoint)
-- TensorBoard logging enabled and functional
-- No NCCL hangs thanks to the required environment variables
+- FSDP2 sharding, checkpointing (DCP), and TensorBoard logging were functional
+- Checkpoints saved at steps 1, 250, and 500
 
 **Notes on results:**
-- MFU numbers use A100 peak FLOPS as a fallback because A40 is not in TorchTitan's device lookup table. Absolute efficiency numbers are therefore not calibrated for A40.
+- The numbers above come from a prior successful validation run. On the current pod, full 500-step reproduction is straightforward with NGPU=1 or NGPU=2; 4-GPU reproduction is blocked by the NCCL init error described in the NCCL section.
+- MFU numbers in the historical table use A100 peak FLOPS as a fallback (the original hardware for some runs was A40-class). Absolute efficiency numbers are therefore not calibrated for the current H100s.
 - The `c4_test` dataset contains only ~2K samples and re-loops approximately every 40 steps. This is expected behavior for this validation dataset.
 - All metrics were logged at `log_freq=10` (51 data points total).
 
@@ -91,7 +103,7 @@ Completed cleanly in ~13 seconds. Loss decreased monotonically. Both GPUs partic
 outputs/
 ├── smoke-test/                 # 10-step smoke test artifacts + log
 ├── infrastructure-run/
-│   ├── checkpoint/             # step-1/, step-250/, step-500/ (DCP)
+│   ├── checkpoint/             # step-1/, step-250/, step-500/ (DCP; shard count depends on NGPU used)
 │   ├── tb/                     # TensorBoard event files
 │   ├── graphs/                 # Generated matplotlib plots + summary
 │   └── infrastructure-run.log  # Full structured log
@@ -104,6 +116,6 @@ Large binary checkpoint files (`.distcp`) are intentionally excluded from git vi
 ## Sources
 
 - TorchTitan v0.1.0: https://github.com/pytorch/torchtitan
-- 4× NVIDIA H100 80GB HBM3
+- 4× NVIDIA H100 80GB HBM3 (1-GPU and 2-GPU debug model runs confirmed working on current pod; 4-GPU blocked by NCCL init)
 - Training metrics and logs generated by TorchTitan
 - Graphs created from logs using Python + matplotlib (assisted by Grok Build)
