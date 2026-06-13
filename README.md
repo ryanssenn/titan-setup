@@ -25,30 +25,37 @@ Artifacts, logs, and generated graphs for completed runs are under `outputs/`.
 
 ## Run
 
-The default command runs the **debug model validation** (no tokens or gated access required):
+From inside a clone of this repo (`cd titan-setup`):
 
 ```bash
-./run_experiment.sh
+git clone --depth 1 -b v0.1.0 https://github.com/pytorch/torchtitan.git torchtitan
+
+cd torchtitan
+pip install -r .ci/docker/requirements.txt
+pip install --force-reinstall \
+  torch==2.6.0+cu124 \
+  torchvision==0.21.0+cu124 \
+  torchaudio==2.6.0+cu124 \
+  --index-url https://download.pytorch.org/whl/cu124
+cd ..
+
+NGPU=1 CONFIG_FILE=configs/infrastructure_run.toml \
+  ./run_experiment.sh --training.steps 10 --metrics.log_freq 2
 ```
 
-See `docs/reproduce.md` for full reproduction instructions.
+Output lands in `outputs/infrastructure_run/`.
+
+For 4 GPUs, the full 500-step run, Llama 3.1 8B, and troubleshooting, see `docs/reproduce.md`.
 
 ### Llama 3.1 8B
 
-To run the full Llama 3.1 8B model you need approval from Meta Llama for the gated repository.
-
-Create a `.env` file (gitignored) with your token:
+Requires Meta Llama approval for the gated repo + tokenizer download (see `docs/reproduce.md`).
 
 ```bash
-echo 'HF_TOKEN=your_approved_hf_token_here' > .env
-chmod 600 .env
+echo 'HF_TOKEN=your_approved_hf_token_here' > .env && chmod 600 .env
 ```
 
-See `docs/reproduce.md` for the exact download + launch commands. The `.env` is automatically used when present.
-
-```bash
-CONFIG_FILE=configs/llama3_8b_2gpu.toml ./run_experiment.sh
-```
+Then use `CONFIG_FILE=configs/llama3_8b_2gpu.toml` (full commands in `docs/reproduce.md`).
 
 ## Sources
 
