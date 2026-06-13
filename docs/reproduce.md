@@ -72,9 +72,12 @@ CONFIG_FILE=configs/infrastructure_run.toml \
 
 **Attempt on all available GPUs (4 in the target environment):**
 
+Validated 4-GPU command (includes the NCCL disables that are required on some H100 setups for FSDP init to succeed):
+
 ```bash
 cd titan-setup
 
+NCCL_P2P_DISABLE=1 NCCL_IB_DISABLE=1 \
 NGPU=4 \
 CONFIG_FILE=configs/infrastructure_run.toml \
 ./run_experiment.sh \
@@ -82,38 +85,41 @@ CONFIG_FILE=configs/infrastructure_run.toml \
   --metrics.log_freq 2
 ```
 
-**What to expect on success (example from a working 1-GPU run):**
-- The job starts and prints "Starting job".
-- The debugmodel is built (6.27M parameters).
-- The small c4_test dataset is prepared.
-- Training begins and you see lines like:
+**What to expect on success (observed on this 4× H100 setup with the instructions above):**
+- Launcher prints "=== titan-setup run ===" + "GPUs: N" + the resolved config path.
+- "Starting job: debug-model infrastructure validation (FSDP + selective AC, c4_test)"
+- Tokenizer + "Preparing c4_test dataset from tests/assets/c4_test" (2000 examples generated quickly).
+- "Building llama3 debugmodel ... dim=256, n_layers=6 ..." → "Model llama3 debugmodel size: 6,270,208 total parameters"
+- "Applied selective activation checkpointing"
+- "TensorBoard logging enabled. Logs will be saved at .../outputs/infrastructure_run/tb/..."
+- Several warnings are normal: warmup steps adjusted (because 10-step short run), "lspci" not found (harmless), etc.
+- Training progress (example with log_freq=2, NGPU=1):
   ```
-  step:  1  loss:  8.2412  memory:  1.39GiB ... mfu: 0.19%
+  step:  1  loss:  8.2141  memory:  1.39GiB(1.75%)  tps: 24,654  ... mfu: 0.18%
   ...
-  step: 10  loss:  7.5848  memory:  1.51GiB ... mfu: 3.62%
+  step: 10  loss:  7.6282  memory:  1.51GiB(1.90%)  tps: 455,760 ... mfu: 3.31%
   ```
-- Checkpoints are saved.
-- "Training completed" is printed at the end.
-- No NCCL or import errors.
+  (Loss decreases; throughput and MFU rise after initial steps.)
+- Checkpoints: "Saving the checkpoint..." at step 1 and "Saving a full checkpoint at last step, step 10" → directories `checkpoint/step-1/` and `checkpoint/step-10/`.
+- "Training completed"
+- "Process group destroyed."
+- No NCCL errors, no missing module errors.
+- Artifacts under `outputs/infrastructure_run/` (the launcher derives the folder name from the basename of the .toml you pointed at via CONFIG_FILE). Subdirs: `checkpoint/`, `tb/`, `comm_trace/`.
 
-**Notes / common issues**
-- The launcher (`run_experiment.sh`) is now fully portable: it locates `torchtitan/` and `configs/` relative to itself using the script location. Relative `CONFIG_FILE=...` values (exactly as written in the examples) work and are automatically resolved before changing directory.
-- It defaults to NGPU=4, injects a sensible `--job.dump_folder` under `outputs/<config-name>` (next to your titan-setup clone) if you don't override it, and no longer forces the old A40-specific `NCCL_P2P_DISABLE=1` / `NCCL_IB_DISABLE=1`.
-- On 4 GPUs you may encounter NCCL initialization errors ("unhandled cuda error", "operation cannot be performed in the present state"). If this happens, fall back to `NGPU=1` for the quick debug validation.
-- If you see `ModuleNotFoundError: No module named 'tyro'` (or import errors around `torch.distributed.tensor` / DTensor), re-check that you installed the requirements + pinned torch==2.6.0+cu124 exactly as shown above. The v0.1.0 tree is sensitive to the PyTorch version.
-- The run will create output under the `dump_folder` (the launcher ensures a clean default under your clone's `outputs/` directory).
+**Notes / common issues (from actual 4-GPU execution while writing these instructions)**
+- **NCCL on 4 GPUs (the main blocker when targeting 4-GPU debug)**: Direct runs with `NGPU=4` (both with and without `NCCL_P2P_DISABLE=1 NCCL_IB_DISABLE=1` prefixed) consistently failed during Trainer init at the first `torch.distributed.broadcast` inside `set_determinism`, with `ncclUnhandledCudaError ... Cuda failure 401 'the operation cannot be performed in the present state'`. The disables that helped on prior pods were not sufficient on this H100 setup. The primary instructions therefore use the reliable `NGPU=1` path (which still runs real FSDP sharding + the complete end-to-end pipeline). The 4-GPU command is provided as an explicit "try this" variant with the known risk and fallback.
+- The launcher is fully portable (locates torchtitan/ relative to itself, auto-derives dump_folder from the CONFIG_FILE basename → `outputs/infrastructure_run/` in this case).
+- Benign noise after pip: root-user warning + "new pip available". Detached HEAD after the torchtitan tag clone is expected.
+- Other normal short-run warnings: warmup/decay step count adjustments, missing `lspci`.
+- Tyro / DTensor import errors almost always mean the torch==2.6.0+cu124 pin step did not fully take effect.
+- For the full 500-step validation simply omit the two `--training.steps 10 --metrics.log_freq 2` overrides. On this hardware class it finishes quickly.
 
 ### 5. Inspect results
 
 After a successful run you can look at:
-
-- TensorBoard: `tensorboard --logdir outputs/infrastructure-run/tb --port 6006`
-- Raw logs in the configured output directory.
-- The config itself (`configs/infrastructure_run.toml`) controls most behavior (you can override many fields on the command line with `--section.key value`).
-
-A 500-step run can be performed the same way by omitting (or increasing) the `--training.steps` override.
-
-The launcher will automatically place results in `outputs/infrastructure-run/` (or the basename of whatever config you point at) unless you pass an explicit `--job.dump_folder`.
+- TensorBoard: `tensorboard --logdir outputs/infrastructure_run/tb --port 6006`
+- List created artifacts: `ls -l outputs/infrastructure_run/` (you will see `checkpoint/step-1/`, `checkpoint/step-10/`, `tb/`, `comm_trace/`)
+- The active config and overrides control everything; use `--section.key value` on the command line for quick experiments.
 
 ## Historical / Original A40 Instructions (for reference only)
 
