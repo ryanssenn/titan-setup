@@ -1,13 +1,8 @@
-# Llama 3.1 8B infrastructure run (requires gated HF tokenizer).
-# Download first:
-#   python scripts/download_tokenizer.py \
-#     --repo_id meta-llama/Meta-Llama-3.1-8B \
-#     --hf_token $HF_TOKEN \
-#     --local_dir assets/tokenizer
+# Tiny debug model (~6.3M params). No gated HF assets required.
+# FSDP shard degree follows NGPU at runtime (data_parallel_shard_degree=-1).
 
 [job]
-dump_folder = "outputs/llama3-8b-run"
-description = "Llama 3.1 8B infrastructure validation (FSDP, real c4)"
+description = "debugmodel validation (FSDP + selective AC, c4_test)"
 
 [profiling]
 enable_profiling = false
@@ -19,24 +14,27 @@ save_tb_folder = "tb"
 
 [model]
 name = "llama3"
-flavor = "8B"
-tokenizer_path = "./assets/tokenizer/original/tokenizer.model"
+flavor = "debugmodel"
+tokenizer_path = "./tests/assets/test_tiktoken.model"
 
 [optimizer]
 name = "AdamW"
-lr = 3e-4
+lr = 8e-4
 eps = 1e-8
 
 [lr_scheduler]
 warmup_steps = 50
+decay_ratio = 0.2
+decay_type = "linear"
+lr_min = 0.0
 
 [training]
-local_batch_size = 1
-seq_len = 8192
+local_batch_size = 8
+seq_len = 2048
 max_norm = 1.0
 steps = 500
 compile = false
-dataset = "c4"
+dataset = "c4_test"
 
 [parallelism]
 data_parallel_replicate_degree = 1
@@ -55,7 +53,7 @@ async_mode = "disabled"
 
 [activation_checkpoint]
 mode = "selective"
-selective_ac_option = "op"
+selective_ac_option = "2"
 
 [float8]
 enable_fsdp_float8_all_gather = false

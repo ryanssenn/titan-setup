@@ -1,9 +1,8 @@
-# Infrastructure validation run: 4x H100, FSDP2, standard stack
-# Uses debugmodel (no gated HF assets required).
+# Llama 3.1 8B. Requires gated tokenizer — run ./download_8b_tokenizer.sh first.
+# FSDP shard degree follows NGPU at runtime (data_parallel_shard_degree=-1).
 
 [job]
-dump_folder = "outputs/infrastructure-run"
-description = "debug-model infrastructure validation (FSDP + selective AC, c4_test)"
+description = "Llama 3.1 8B (FSDP, c4)"
 
 [profiling]
 enable_profiling = false
@@ -15,27 +14,24 @@ save_tb_folder = "tb"
 
 [model]
 name = "llama3"
-flavor = "debugmodel"
-tokenizer_path = "./tests/assets/test_tiktoken.model"
+flavor = "8B"
+tokenizer_path = "./assets/tokenizer/original/tokenizer.model"
 
 [optimizer]
 name = "AdamW"
-lr = 8e-4
+lr = 3e-4
 eps = 1e-8
 
 [lr_scheduler]
 warmup_steps = 50
-decay_ratio = 0.2
-decay_type = "linear"
-lr_min = 0.0
 
 [training]
-local_batch_size = 8
-seq_len = 2048
+local_batch_size = 1
+seq_len = 8192
 max_norm = 1.0
 steps = 500
 compile = false
-dataset = "c4_test"
+dataset = "c4"
 
 [parallelism]
 data_parallel_replicate_degree = 1
@@ -54,7 +50,7 @@ async_mode = "disabled"
 
 [activation_checkpoint]
 mode = "selective"
-selective_ac_option = "2"
+selective_ac_option = "op"
 
 [float8]
 enable_fsdp_float8_all_gather = false
